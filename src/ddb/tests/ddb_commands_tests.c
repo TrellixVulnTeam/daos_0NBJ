@@ -6,8 +6,9 @@
 #include <gurt/debug.h>
 #include <daos/tests_lib.h>
 #include <ddb_common.h>
-#include <ddb_cmd_options.h>
+#include <ddb.h>
 #include <daos_srv/vos.h>
+#include <ddb_vos.h>
 #include "ddb_cmocka.h"
 #include "ddb_test_driver.h"
 
@@ -23,6 +24,7 @@ struct ddb_ctx g_ctx = {
 	.dc_io_ft.ddb_read_file = dvt_fake_read_file,
 	.dc_io_ft.ddb_get_file_size = dvt_fake_get_file_size,
 	.dc_io_ft.ddb_get_file_exists = dvt_fake_get_file_exists,
+	.dc_write_mode = true,
 };
 
 static uint32_t fake_write_file_called;
@@ -194,19 +196,13 @@ dump_dtx_cmd_tests(void **state)
 static void
 rm_cmd_tests(void **state)
 {
-	struct dt_vos_pool_ctx	*tctx = *state;
-	struct ddb_ctx		 ctx = {0};
 	struct rm_options	 opt = {0};
 
-	ctx.dc_poh = tctx->dvt_poh;
-	ctx.dc_io_ft.ddb_print_message = dvt_fake_print;
-	ctx.dc_io_ft.ddb_print_error = dvt_fake_print;
-
-	assert_invalid(ddb_run_rm(&ctx, &opt));
+	assert_invalid(ddb_run_rm(&g_ctx, &opt));
 
 	dvt_fake_print_reset();
 	opt.path = "[0]";
-	assert_success(ddb_run_rm(&ctx, &opt));
+	assert_success(ddb_run_rm(&g_ctx, &opt));
 	assert_string_equal(dvt_fake_print_buffer,
 			    "/12345678-1234-1234-1234-123456789001 deleted\n");
 }
@@ -350,7 +346,7 @@ dcv_suit_setup(void **state)
 
 	/* test setup creates the pool, but doesn't open it ... leave it open for these tests */
 	tctx = *state;
-	assert_success(vos_pool_open(tctx->dvt_pmem_file, tctx->dvt_pool_uuid, 0, &tctx->dvt_poh));
+	assert_success(dv_pool_open(tctx->dvt_pmem_file, &tctx->dvt_poh));
 
 	g_ctx.dc_poh = tctx->dvt_poh;
 
@@ -364,7 +360,7 @@ dcv_suit_teardown(void **state)
 
 	if (tctx == NULL)
 		fail_msg("Test not setup correctly");
-	assert_success(vos_pool_close(tctx->dvt_poh));
+	assert_success(dv_pool_close(tctx->dvt_poh));
 	ddb_teardown_vos(state);
 
 	return 0;

@@ -5,8 +5,8 @@
  */
 #include <daos/tests_lib.h>
 #include <ddb_main.h>
-#include <ddb_cmd_options.h>
-#include <daos_srv/vos.h>
+#include <ddb.h>
+#include <ddb_vos.h>
 #include "ddb_cmocka.h"
 #include "ddb_test_driver.h"
 
@@ -241,7 +241,7 @@ ddb_main_suit_setup(void **state)
 
 	/* test setup creates the pool, but doesn't open it ... leave it open for these tests */
 	tctx = *state;
-	assert_success(vos_pool_open(tctx->dvt_pmem_file, tctx->dvt_pool_uuid, 0, &tctx->dvt_poh));
+	assert_success(dv_pool_open(tctx->dvt_pmem_file, &tctx->dvt_poh));
 
 	return 0;
 }
@@ -253,7 +253,7 @@ ddb_main_suit_teardown(void **state)
 
 	if (tctx == NULL)
 		fail_msg("Test not setup correctly");
-	assert_success(vos_pool_close(tctx->dvt_poh));
+	assert_success(dv_pool_close(tctx->dvt_poh));
 	ddb_teardown_vos(state);
 
 	return 0;
