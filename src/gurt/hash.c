@@ -590,8 +590,8 @@ d_hash_rec_delete(struct d_hash_table *htable, const void *key,
 	return deleted;
 }
 
-bool
-d_hash_rec_delete_at(struct d_hash_table *htable, d_list_t *link)
+static bool
+__d_hash_rec_delete_at(struct d_hash_table *htable, d_list_t *link, bool force)
 {
 	uint32_t idx = 0;
 	bool	 deleted = false;
@@ -611,9 +611,15 @@ d_hash_rec_delete_at(struct d_hash_table *htable, d_list_t *link)
 	if (need_lock)
 		ch_bucket_unlock(htable, idx, false);
 
-	if (zombie)
+	if (zombie || force)
 		ch_rec_free(htable, link);
 	return deleted;
+}
+
+bool
+d_hash_rec_delete_at(struct d_hash_table *htable, d_list_t *link)
+{
+	return __d_hash_rec_delete_at(htable, link, false);
 }
 
 bool
@@ -954,7 +960,7 @@ d_hash_table_destroy_inplace(struct d_hash_table *htable, bool force)
 				D_DEBUG(DB_TRACE, "Warning, non-empty hash\n");
 				D_GOTO(out, rc = -DER_BUSY);
 			}
-			d_hash_rec_delete_at(htable, bucket->hb_head.next);
+			__d_hash_rec_delete_at(htable, bucket->hb_head.next, true);
 		}
 	}
 
