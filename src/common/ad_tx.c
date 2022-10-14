@@ -8,6 +8,8 @@
 #include <daos_srv/ad_mem.h>
 #include "ad_mem.h"
 
+D_CASSERT(sizeof(struct ad_tx) <= UTX_PRIV_SIZE);
+
 enum {
 	ACT_UNDO = 0,
 	ACT_REDO = 1,
@@ -59,12 +61,10 @@ act_copy_payload(struct umem_action *act, void *addr, daos_size_t size)
 int
 ad_tx_begin(struct ad_blob_handle bh, struct ad_tx *tx)
 {
-	static __thread uint64_t	tx_id;
-	int				rc = 0;
+	int	rc = 0;
 
 	blob_addref(bh.bh_blob);
 	tx->tx_blob = bh.bh_blob;
-	tx->tx_id = ++tx_id;
 	D_INIT_LIST_HEAD(&tx->tx_redo);
 	D_INIT_LIST_HEAD(&tx->tx_undo);
 	D_INIT_LIST_HEAD(&tx->tx_ar_pub);
