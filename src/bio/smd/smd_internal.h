@@ -1,5 +1,5 @@
 /**
- * (C) Copyright 2018-2021 Intel Corporation.
+ * (C) Copyright 2018-2022 Intel Corporation.
  *
  * SPDX-License-Identifier: BSD-2-Clause-Patent
  */
@@ -20,8 +20,10 @@
 #include <daos_srv/smd.h>
 
 #define TABLE_DEV	"device"
-#define TABLE_TGT	"target"
-#define TABLE_POOL	"pool"
+
+extern char *TABLE_TGTS[SMD_DEV_TYPE_MAX];
+
+extern char *TABLE_POOLS[SMD_DEV_TYPE_MAX];
 
 #define SMD_MAX_TGT_CNT		64
 

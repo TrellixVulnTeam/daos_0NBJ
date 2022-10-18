@@ -1052,7 +1052,7 @@ assign_device(int tgt_id)
 	}
 
 	/* Update mapping for this target in NVMe device table */
-	rc = smd_dev_add_tgt(chosen_bdev->bb_uuid, tgt_id);
+	rc = smd_dev_add_tgt(chosen_bdev->bb_uuid, tgt_id, SMD_DEV_TYPE_DATA);
 	if (rc) {
 		D_ERROR("Failed to map dev "DF_UUID" to tgt %d. "DF_RC"\n",
 			DP_UUID(chosen_bdev->bb_uuid), tgt_id, DP_RC(rc));
@@ -1092,7 +1092,7 @@ init_blobstore_ctxt(struct bio_xs_context *ctxt, int tgt_id)
 	 * if found, create blobstore on the mapped device.
 	 */
 retry:
-	rc = smd_dev_get_by_tgt(tgt_id, &dev_info);
+	rc = smd_dev_get_by_tgt(tgt_id, SMD_DEV_TYPE_DATA, &dev_info);
 	if (rc == -DER_NONEXIST && !assigned) {
 		rc = assign_device(tgt_id);
 		if (rc)

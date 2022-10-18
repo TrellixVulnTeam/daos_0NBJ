@@ -289,7 +289,7 @@ bio_blob_delete(uuid_t uuid, struct bio_xs_context *xs_ctxt)
 	/**
 	 * Query per-server metadata to get blobID for this pool:target
 	 */
-	rc = smd_pool_get_blob(uuid, xs_ctxt->bxc_tgt_id, &blob_id);
+	rc = smd_pool_get_blob(uuid, xs_ctxt->bxc_tgt_id, SMD_DEV_TYPE_DATA, &blob_id);
 	if (rc != 0) {
 		D_WARN("Blob for xs:%p, pool:"DF_UUID" doesn't exist\n",
 		       xs_ctxt, DP_UUID(uuid));
@@ -336,7 +336,7 @@ bio_blob_delete(uuid_t uuid, struct bio_xs_context *xs_ctxt)
 		D_DEBUG(DB_MGMT, "Successfully deleted blobID "DF_U64" for "
 			"pool:"DF_UUID" xs:%p\n", blob_id, DP_UUID(uuid),
 			xs_ctxt);
-		rc = smd_pool_del_tgt(uuid, xs_ctxt->bxc_tgt_id);
+		rc = smd_pool_del_tgt(uuid, xs_ctxt->bxc_tgt_id, SMD_DEV_TYPE_DATA);
 		if (rc)
 			D_ERROR("Failed to unassign blob:"DF_U64" from pool: "
 				""DF_UUID":%d. %d\n", blob_id, DP_UUID(uuid),
@@ -382,7 +382,7 @@ bio_blob_create(uuid_t uuid, struct bio_xs_context *xs_ctxt, uint64_t blob_sz)
 	 * Query per-server metadata to make sure the blob for this pool:target
 	 * hasn't been created yet.
 	 */
-	rc = smd_pool_get_blob(uuid, xs_ctxt->bxc_tgt_id, &blob_id);
+	rc = smd_pool_get_blob(uuid, xs_ctxt->bxc_tgt_id, SMD_DEV_TYPE_DATA, &blob_id);
 	if (rc == 0) {
 		D_ERROR("Duplicated blob for xs:%p pool:"DF_UUID"\n",
 			xs_ctxt, DP_UUID(uuid));
@@ -418,7 +418,7 @@ bio_blob_create(uuid_t uuid, struct bio_xs_context *xs_ctxt, uint64_t blob_sz)
 			bma.bma_opts.num_clusters);
 
 		rc = smd_pool_add_tgt(uuid, xs_ctxt->bxc_tgt_id, ba->bca_id,
-				      blob_sz);
+				      SMD_DEV_TYPE_DATA, blob_sz);
 		if (rc != 0) {
 			D_ERROR("Failed to assign pool blob:"DF_U64" to pool: "
 				""DF_UUID":%d. %d\n", ba->bca_id, DP_UUID(uuid),
@@ -467,7 +467,7 @@ bio_blob_open(struct bio_io_context *ctxt, bool async)
 	/*
 	 * Query per-server metadata to get blobID for this pool:target
 	 */
-	rc = smd_pool_get_blob(ctxt->bic_pool_id, xs_ctxt->bxc_tgt_id,
+	rc = smd_pool_get_blob(ctxt->bic_pool_id, xs_ctxt->bxc_tgt_id, SMD_DEV_TYPE_DATA,
 			       &blob_id);
 	if (rc != 0) {
 		D_ERROR("Failed to find blobID for xs:%p, pool:"DF_UUID", tgt:%d\n",
@@ -855,7 +855,7 @@ bio_write_blob_hdr(struct bio_io_context *ioctxt, struct bio_blob_hdr *bio_bh)
 	bio_bh->bbh_magic = BIO_BLOB_HDR_MAGIC;
 	bio_bh->bbh_vos_id = (uint32_t)ioctxt->bic_xs_ctxt->bxc_tgt_id;
 	/* Query per-server metadata to get blobID for this pool:target */
-	rc = smd_pool_get_blob(bio_bh->bbh_pool, bio_bh->bbh_vos_id, &blob_id);
+	rc = smd_pool_get_blob(bio_bh->bbh_pool, bio_bh->bbh_vos_id, SMD_DEV_TYPE_DATA, &blob_id);
 	if (rc) {
 		D_ERROR("Failed to find blobID for xs:%p, pool:"DF_UUID"\n",
 			ioctxt->bic_xs_ctxt, DP_UUID(bio_bh->bbh_pool));
@@ -865,7 +865,7 @@ bio_write_blob_hdr(struct bio_io_context *ioctxt, struct bio_blob_hdr *bio_bh)
 	bio_bh->bbh_blob_id = blob_id;
 
 	/* Query per-server metadata to get device id for xs */
-	rc = smd_dev_get_by_tgt(bio_bh->bbh_vos_id, &dev_info);
+	rc = smd_dev_get_by_tgt(bio_bh->bbh_vos_id, SMD_DEV_TYPE_DATA, &dev_info);
 	if (rc) {
 		D_ERROR("Not able to find device id/blobstore for tgt %d\n",
 			bio_bh->bbh_vos_id);
