@@ -89,10 +89,46 @@ const (
 	SystemCheckFlagAuto    = uint32(chkpb.CheckFlag_CF_AUTO)
 )
 
+type CheckPolicy struct {
+	mgmtpb.CheckInconsistPolicy
+}
+
+func (p *CheckPolicy) Set(class, action string) error {
+	if cls, ok := chkpb.CheckInconsistClass_value[class]; ok {
+		p.InconsistCas = chkpb.CheckInconsistClass(cls)
+	} else {
+		return errors.Errorf("invalid policy class %q", class)
+	}
+	if act, ok := chkpb.CheckInconsistAction_value[action]; ok {
+		p.InconsistAct = chkpb.CheckInconsistAction(act)
+	} else {
+		return errors.Errorf("invalid policy action %q", action)
+	}
+
+	return nil
+}
+
+func CheckerPolicyClasses() []string {
+	names := make([]string, 0, len(chkpb.CheckInconsistClass_value))
+	for name := range chkpb.CheckInconsistClass_value {
+		names = append(names, name)
+	}
+	return names
+}
+
+func CheckerPolicyActions() []string {
+	names := make([]string, 0, len(chkpb.CheckInconsistAction_value))
+	for name := range chkpb.CheckInconsistAction_value {
+		names = append(names, name)
+	}
+	return names
+}
+
 type SystemCheckStartReq struct {
 	unaryRequest
 	msRequest
 
+	Policies []*CheckPolicy
 	mgmtpb.CheckStartReq
 }
 
@@ -103,6 +139,9 @@ func SystemCheckStart(ctx context.Context, rpcClient UnaryInvoker, req *SystemCh
 	}
 
 	req.CheckStartReq.Sys = req.getSystem(rpcClient)
+	for _, p := range req.Policies {
+		req.CheckStartReq.Policies = append(req.CheckStartReq.Policies, &p.CheckInconsistPolicy)
+	}
 	req.setRPC(func(ctx context.Context, conn *grpc.ClientConn) (proto.Message, error) {
 		return mgmtpb.NewMgmtSvcClient(conn).SystemCheckStart(ctx, &req.CheckStartReq)
 	})

@@ -13,11 +13,13 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jessevdk/go-flags"
 	"github.com/pkg/errors"
 
 	"github.com/daos-stack/daos/src/control/common/cmdutil"
 	"github.com/daos-stack/daos/src/control/lib/control"
 	"github.com/daos-stack/daos/src/control/lib/txtfmt"
+	"github.com/daos-stack/daos/src/control/lib/ui"
 )
 
 type checkCmdRoot struct {
@@ -75,13 +77,51 @@ func (cmd *checkDisableCmd) Execute([]string) error {
 	return control.SystemCheckDisable(context.Background(), cmd.ctlInvoker, req)
 }
 
+type setRepPolFlag struct {
+	ui.SetPropertiesFlag
+
+	SetPolicies []*control.CheckPolicy
+}
+
+func (f *setRepPolFlag) UnmarshalFlag(fv string) error {
+	f.SettableKeys(control.CheckerPolicyClasses()...)
+
+	if err := f.SetPropertiesFlag.UnmarshalFlag(fv); err != nil {
+		return err
+	}
+
+	i := 0
+	f.SetPolicies = make([]*control.CheckPolicy, len(f.ParsedProps))
+	for class, action := range f.ParsedProps {
+		f.SetPolicies[i] = new(control.CheckPolicy)
+		if err := f.SetPolicies[i].Set(class, action); err != nil {
+			return err
+		}
+		i++
+	}
+
+	return nil
+}
+
+func (f *setRepPolFlag) Complete(match string) []flags.Completion {
+	actions := control.CheckerPolicyActions()
+	comps := make(ui.CompletionMap)
+	for _, class := range control.CheckerPolicyClasses() {
+		comps[class] = actions
+	}
+	f.SetCompletions(comps)
+
+	return f.SetPropertiesFlag.Complete(match)
+}
+
 type checkStartCmd struct {
 	checkCmdBase
 
-	DryRun  bool `short:"n" long:"dry-run" description:"Scan only; do not initiate repairs."`
-	Reset   bool `short:"r" long:"reset" description:"Reset the system check state."`
-	Failout bool `short:"f" long:"failout" description:"Stop on failure."`
-	Auto    bool `short:"a" long:"auto" description:"Attempt to automatically repair problems."`
+	DryRun   bool          `short:"n" long:"dry-run" description:"Scan only; do not initiate repairs."`
+	Reset    bool          `short:"r" long:"reset" description:"Reset the system check state."`
+	Failout  bool          `short:"f" long:"failout" description:"Stop on failure."`
+	Auto     bool          `short:"a" long:"auto" description:"Attempt to automatically repair problems."`
+	Policies setRepPolFlag `short:"p" long:"policies" description:"Set repair policies."`
 }
 
 func (cmd *checkStartCmd) Execute(_ []string) error {
@@ -102,6 +142,7 @@ func (cmd *checkStartCmd) Execute(_ []string) error {
 	if cmd.Auto {
 		req.Flags |= control.SystemCheckFlagAuto
 	}
+	req.Policies = cmd.Policies.SetPolicies
 
 	if err := control.SystemCheckStart(ctx, cmd.ctlInvoker, req); err != nil {
 		return err
