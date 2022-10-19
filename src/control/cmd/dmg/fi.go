@@ -48,8 +48,8 @@ func (c chkRptCls) String() string {
 
 func (c chkRptCls) Complete(match string) (comps []flags.Completion) {
 	for _, cls := range control.CheckerPolicyClasses() {
-		if strings.HasPrefix(cls, match) {
-			comps = append(comps, flags.Completion{Item: cls})
+		if strings.HasPrefix(cls.String(), match) {
+			comps = append(comps, flags.Completion{Item: cls.String()})
 		}
 	}
 	return

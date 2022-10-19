@@ -49,22 +49,12 @@ message CheckStartReq {
 	repeated CheckInconsistPolicy policies = 5; // Policy array for handling inconsistency.
 }
 
-// CheckStartResp returns the result of check start.
-message CheckStartResp {
-	int32 status = 1; // DAOS error code.
-}
-
 // For 'dmg check stop'.
 message CheckStopReq {
 	string sys = 1; // DAOS system identifier.
 	// UUID for the pools for which to stop DAOS check.
 	// If empty, then stop check for all pools in the system.
 	repeated string uuids = 2;
-}
-
-// CheckStopResp returns the result of check stop.
-message CheckStopResp {
-	int32 status = 1; // DAOS error code.
 }
 
 // For 'dmg check query'.
@@ -144,13 +134,34 @@ message CheckQueryResp {
 	repeated chk.CheckReport reports = 7;
 }
 
-// For 'dmg check prop'
+// For 'dmg check set-policy'
+message CheckSetPolicyReq {
+	string sys = 1; // DAOS system identifier.
+	uint32 flags = 2; // The flags when start check - see CheckFlag.
+	repeated CheckInconsistPolicy policies = 3; // Inconsistency policy array.
+}
+
+// To allow daos_server to query check leader properties
 message CheckPropReq {
 	string sys = 1; // DAOS system identifier.
 }
 
 // CheckPropResp returns the result of check prop and the properties when start check.
 message CheckPropResp {
+	int32 status = 1; // DAOS error code.
+	uint32 flags = 2; // The flags when start check - see CheckFlag.
+	repeated CheckInconsistPolicy policies = 3; // Inconsistency policy array.
+}
+
+// For 'dmg check get-policy'
+message CheckGetPolicyReq {
+	string sys = 1; // DAOS system identifier.
+	repeated chk.CheckInconsistClass classes = 2;
+}
+
+// CheckGetPolicyResp returns the result of check prop and the properties when start check.
+// NB: Dupe of CheckPropResp currently; may consolidate if they don't diverge.
+message CheckGetPolicyResp {
 	int32 status = 1; // DAOS error code.
 	uint32 flags = 2; // The flags when start check - see CheckFlag.
 	repeated CheckInconsistPolicy policies = 3; // Inconsistency policy array.
@@ -164,9 +175,4 @@ message CheckActReq {
 	// The decision from RASEvent::extended_info::check_info::chk_opts.
 	chk.CheckInconsistAction act = 3;
 	bool for_all = 4; // The same action is applicable to the same type of inconsistency.
-}
-
-// CheckActResp returns the result of executing admin's decision.
-message CheckActResp {
-	int32 status = 1; // DAOS error code.
 }

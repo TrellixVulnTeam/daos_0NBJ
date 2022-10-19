@@ -88,15 +88,17 @@ service MgmtSvc {
 	// Disable system check mode
 	rpc SystemCheckDisable(CheckDisableReq) returns(DaosResp){}
 	// Initiate a system check
-	rpc SystemCheckStart(CheckStartReq) returns(CheckStartResp){}
+	rpc SystemCheckStart(CheckStartReq) returns(DaosResp){}
 	// Stop a system check
-	rpc SystemCheckStop(CheckStopReq) returns(CheckStopResp){}
+	rpc SystemCheckStop(CheckStopReq) returns(DaosResp){}
 	// Query a system check
 	rpc SystemCheckQuery(CheckQueryReq) returns(CheckQueryResp){}
+	// Set system check properties
+	rpc SystemCheckSetPolicy(CheckSetPolicyReq) returns(DaosResp){}
 	// Query system check properties
-	rpc SystemCheckProp(CheckPropReq) returns(CheckPropResp){}
+	rpc SystemCheckGetPolicy(CheckGetPolicyReq) returns(CheckGetPolicyResp){}
 	// Send the desired action to repair an inconsistency.
-	rpc SystemCheckRepair(CheckActReq) returns(CheckActResp){}
+	rpc SystemCheckRepair(CheckActReq) returns(DaosResp){}
 	// PoolUpgrade queries a DAOS pool.
 	rpc PoolUpgrade(PoolUpgradeReq) returns (PoolUpgradeResp) {}
 	// Set a system attribute or attributes.

@@ -2612,7 +2612,7 @@ ds_mgmt_drpc_check_start(Drpc__Call *drpc_req, Drpc__Response *drpc_resp)
 {
 	struct drpc_alloc	 alloc = PROTO_ALLOCATOR_INIT(alloc);
 	Mgmt__CheckStartReq	*req = NULL;
-	Mgmt__CheckStartResp	 resp = MGMT__CHECK_START_RESP__INIT;
+	Mgmt__DaosResp		 resp = MGMT__DAOS_RESP__INIT;
 	uint8_t			*body;
 	size_t			 len;
 	int			 rc = 0;
@@ -2638,13 +2638,13 @@ ds_mgmt_drpc_check_start(Drpc__Call *drpc_req, Drpc__Response *drpc_resp)
 		D_ERROR("Failed to start check: "DF_RC"\n", DP_RC(rc));
 
 	resp.status = rc;
-	len = mgmt__check_start_resp__get_packed_size(&resp);
+	len = mgmt__daos_resp__get_packed_size(&resp);
 	D_ALLOC(body, len);
 	if (body == NULL) {
 		D_ERROR("Failed to allocate response body (start check)\n");
 		drpc_resp->status = DRPC__STATUS__FAILED_MARSHAL;
 	} else {
-		mgmt__check_start_resp__pack(&resp, body);
+		mgmt__daos_resp__pack(&resp, body);
 		drpc_resp->body.len = len;
 		drpc_resp->body.data = body;
 	}
@@ -2661,7 +2661,7 @@ ds_mgmt_drpc_check_stop(Drpc__Call *drpc_req, Drpc__Response *drpc_resp)
 {
 	struct drpc_alloc	 alloc = PROTO_ALLOCATOR_INIT(alloc);
 	Mgmt__CheckStopReq	*req = NULL;
-	Mgmt__CheckStopResp	 resp = MGMT__CHECK_STOP_RESP__INIT;
+	Mgmt__DaosResp		 resp = MGMT__DAOS_RESP__INIT;
 	uint8_t			*body;
 	size_t			 len;
 	int			 rc = 0;
@@ -2686,13 +2686,13 @@ ds_mgmt_drpc_check_stop(Drpc__Call *drpc_req, Drpc__Response *drpc_resp)
 		D_ERROR("Failed to stop check: "DF_RC"\n", DP_RC(rc));
 
 	resp.status = rc;
-	len = mgmt__check_stop_resp__get_packed_size(&resp);
+	len = mgmt__daos_resp__get_packed_size(&resp);
 	D_ALLOC(body, len);
 	if (body == NULL) {
 		D_ERROR("Failed to allocate response body (stop check)\n");
 		drpc_resp->status = DRPC__STATUS__FAILED_MARSHAL;
 	} else {
-		mgmt__check_stop_resp__pack(&resp, body);
+		mgmt__daos_resp__pack(&resp, body);
 		drpc_resp->body.len = len;
 		drpc_resp->body.data = body;
 	}
@@ -2945,6 +2945,8 @@ ds_chk_prob_free(Mgmt__CheckInconsistPolicy **policies, uint32_t policy_nr)
 	}
 }
 
+#define ALL_CHK_POLICY	CHK__CHECK_INCONSIST_CLASS__CIC_UNKNOWN
+
 static int
 ds_chk_prop_cb(void *buf, struct chk_policy *policies, int cnt, uint32_t flags)
 {
@@ -2963,7 +2965,10 @@ ds_chk_prop_cb(void *buf, struct chk_policy *policies, int cnt, uint32_t flags)
 			D_GOTO(out, rc = -DER_NOMEM);
 
 		mgmt__check_inconsist_policy__init(ply[i]);
-		ply[i]->inconsist_cas = policies[i].cp_class;
+		if (policies[i].cp_class == 0 && cnt == ALL_CHK_POLICY)
+			ply[i]->inconsist_cas = i;
+		else
+			ply[i]->inconsist_cas = policies[i].cp_class;
 		ply[i]->inconsist_act = policies[i].cp_action;
 	}
 
@@ -3030,7 +3035,7 @@ ds_mgmt_drpc_check_act(Drpc__Call *drpc_req, Drpc__Response *drpc_resp)
 {
 	struct drpc_alloc	 alloc = PROTO_ALLOCATOR_INIT(alloc);
 	Mgmt__CheckActReq	*req = NULL;
-	Mgmt__CheckActResp	 resp = MGMT__CHECK_ACT_RESP__INIT;
+	Mgmt__DaosResp		 resp = MGMT__DAOS_RESP__INIT;
 	uint8_t			*body;
 	size_t			 len;
 	int			 rc = 0;
@@ -3055,13 +3060,13 @@ ds_mgmt_drpc_check_act(Drpc__Call *drpc_req, Drpc__Response *drpc_resp)
 		D_ERROR("Failed to set action for check: "DF_RC"\n", DP_RC(rc));
 
 	resp.status = rc;
-	len = mgmt__check_act_resp__get_packed_size(&resp);
+	len = mgmt__daos_resp__get_packed_size(&resp);
 	D_ALLOC(body, len);
 	if (body == NULL) {
 		D_ERROR("Failed to allocate response body (set action for check)\n");
 		drpc_resp->status = DRPC__STATUS__FAILED_MARSHAL;
 	} else {
-		mgmt__check_act_resp__pack(&resp, body);
+		mgmt__daos_resp__pack(&resp, body);
 		drpc_resp->body.len = len;
 		drpc_resp->body.data = body;
 	}
